@@ -1,6 +1,6 @@
 {
   "name": "that-sqs-thing",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Poll SQS queue and invoke local serverless function",
   "main": "index.js",
   "bin": {
