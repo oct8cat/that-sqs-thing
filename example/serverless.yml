@@ -1,0 +1,11 @@
+service: example
+frameworkVersion: "3"
+provider:
+  name: aws
+  runtime: nodejs12.x
+functions:
+  sqs:
+    handler: sqs.handler
+    events:
+      - sqs:
+          arn: arn:aws:sqs:us-east-1:XXXXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXX

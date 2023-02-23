@@ -1,0 +1,18 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "tst https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX sqs us-east-1",
+    "test:send": "aws sqs send-message --region=us-east-1 --queue-url https://sqs.us-east-1.amazonaws.com/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX --message-body '{\"hello\":\"world\"}'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "that-sqs-thing": "^1.0.0"
+  },
+  "devDependencies": {
+    "aws-lambda": "^1.0.7"
+  }
+}

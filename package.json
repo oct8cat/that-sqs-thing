@@ -1,0 +1,36 @@
+{
+  "name": "that-sqs-thing",
+  "version": "1.0.0",
+  "description": "Poll SQS queue and invoke local serverless function",
+  "main": "index.js",
+  "bin": {
+    "tst": "index.js",
+    "that-sqs-thing": "index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "aws-lambda": "^1.0.7"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.276.0"
+  },
+  "files": [
+    "index.js"
+  ],
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oct8cat/that-sqs-thing.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oct8cat/that-sqs-thing/issues"
+  },
+  "homepage": "https://github.com/oct8cat/that-sqs-thing#readme"
+}
