@@ -2,33 +2,17 @@
 const { exec } = require("child_process");
 const { ReceiveMessageCommand, SQSClient } = require("@aws-sdk/client-sqs");
 
-/**
- * @param {SQSClient} client
- * @param {string} src
- * @returns {Promise<import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput>}
- */
-const receive = (client, src) => {
-  return client.send(new ReceiveMessageCommand({ QueueUrl: src }));
+/** @type {(client: SQSClient, queueUrl: string) => Promise<import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput>)} */
+const receive = (client, queueUrl) => {
+  return client.send(new ReceiveMessageCommand({ QueueUrl: queueUrl }));
 };
 
-/**
- * @param {string} fn
- * @param {import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput} payload
- */
+/** @type {(fn: string, payload: import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput) => Promise<string | undefined>} */
 const invoke = (fn, payload) => {
-  if (!payload.Messages || !payload.Messages.length) return;
-  /** @type {import("aws-lambda").SQSEvent} */
-  const event = {
-    Records: payload.Messages.map(
-      /** @returns {import("aws-lambda").SQSRecord} */
-      (message) => ({
-        messageId: message.MessageId,
-        receiptHandle: message.ReceiptHandle,
-        body: message.Body,
-      })
-    ),
-  };
+  const event = createEvent(payload.Messages);
+  if (!event.Records.length) return;
   const cmd = `sls invoke local -f ${fn} -d '${JSON.stringify(event)}'`;
+  console.log(`🤏 ${cmd}`);
   return new Promise((resolve, reject) => {
     exec(cmd, (err, stdout) => {
       if (err) return reject(err);
@@ -38,9 +22,22 @@ const invoke = (fn, payload) => {
   });
 };
 
+/** @type {(messages: import("@aws-sdk/client-sqs").Message[]) => import("aws-lambda").SQSEvent} */
+const createEvent = (messages = []) => ({
+  Records: messages.map(
+    /** @type {(message: import("@aws-sdk/client-sqs").Message) => import("aws-lambda").SQSRecord} */
+    (message) => ({
+      messageId: message.MessageId,
+      receiptHandle: message.ReceiptHandle,
+      body: message.Body,
+    })
+  ),
+});
+
 module.exports = {
   receive,
   invoke,
+  createEvent,
 };
 
 //
@@ -50,5 +47,5 @@ if (require.main === module) {
   const client = new SQSClient({ region });
   const poll = () => receive(client, queueUrl).then(invoke.bind(null, fn));
   poll();
-  setInterval(poll, 1000);
+  setInterval(poll, 5000);
 }
