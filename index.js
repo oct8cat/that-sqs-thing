@@ -1,51 +1,42 @@
 #!/usr/bin/env node
-const { exec } = require("child_process");
+const util = require("util");
+const child_process = require("child_process");
 const { ReceiveMessageCommand, SQSClient } = require("@aws-sdk/client-sqs");
 
-/** @type {(client: SQSClient, queueUrl: string) => Promise<import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput>)} */
-const receive = (client, queueUrl) => {
-  return client.send(new ReceiveMessageCommand({ QueueUrl: queueUrl }));
-};
+const receive = (queueUrl, client = new SQSClient()) =>
+  client.send(new ReceiveMessageCommand({ QueueUrl: queueUrl }));
 
-/** @type {(fn: string, payload: import("@aws-sdk/client-sqs").ReceiveMessageCommandOutput) => Promise<string | undefined>} */
-const invoke = (fn, payload) => {
-  const event = createEvent(payload.Messages);
-  if (!event.Records.length) return;
-  const cmd = `sls invoke local -f ${fn} -d '${JSON.stringify(event)}'`;
-  console.log(`🤏 ${cmd}`);
-  return new Promise((resolve, reject) => {
-    exec(cmd, (err, stdout) => {
-      if (err) return reject(err);
-      console.log(stdout);
-      resolve(stdout);
-    });
-  });
-};
+const invoke =
+  (fn, logger = console) =>
+  async (
+    payload,
+    event = {
+      Records: (payload.Messages || []).map((message) => ({
+        messageId: message.MessageId,
+        receiptHandle: message.ReceiptHandle,
+        body: message.Body,
+      })),
+    }
+  ) => {
+    if (!event.Records.length) return;
+    const cmd = `sls invoke local -f ${fn} -d '${JSON.stringify(event)}'`;
+    logger.info(cmd);
+    const { stderr, stdout } = await util.promisify(child_process.exec)(cmd);
+    stderr && logger.error(stderr);
+    stdout && logger.log(stdout);
+  };
 
-/** @type {(messages: import("@aws-sdk/client-sqs").Message[]) => import("aws-lambda").SQSEvent} */
-const createEvent = (messages = []) => ({
-  Records: messages.map(
-    /** @type {(message: import("@aws-sdk/client-sqs").Message) => import("aws-lambda").SQSRecord} */
-    (message) => ({
-      messageId: message.MessageId,
-      receiptHandle: message.ReceiptHandle,
-      body: message.Body,
-    })
-  ),
-});
-
-module.exports = {
-  receive,
-  invoke,
-  createEvent,
-};
-
-//
-
-if (require.main === module) {
-  const [queueUrl, fn, region] = process.argv.slice(2);
-  const client = new SQSClient({ region });
-  const poll = () => receive(client, queueUrl).then(invoke.bind(null, fn));
+const start = ({ fn, interval, logger, queueUrl, once = false }) => {
+  const poll = () => receive(queueUrl).then(invoke(fn, logger));
   poll();
-  setInterval(poll, 5000);
-}
+  if (once) return;
+  return setInterval(poll, interval);
+};
+
+if (require.main === module)
+  start({
+    queueUrl: process.argv[2] || process.env.TST_QUEUE_URL,
+    fn: process.argv[3] || process.env.TST_FN,
+    interval: process.argv[4] || process.env.TST_INTERVAL || 5000,
+    once: process.env.TST_ONCE
+  });

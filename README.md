@@ -12,29 +12,19 @@ yarn i -g that-sqs-thing
 ## Usage
 
 ```bash
-tst <queueUrl> <fn> [region]
+# With CLI args:
+tst [queueUrl] [fn] [interval]
+
+# With env vars
+TST_QUEUE_URL=my-queue TST_FN=my-function TST_INTERVAL=5000 tst
+
+# With env vars (once, useful for tests)
+TST_QUEUE_URL=my-queue TST_FN=my-function TST_INTERVAL=5000 TST_ONCE=true tst
+
 ```
 
-## Example
+## Test
 
 ```bash
-cd example
-# Edit queueUrl/region
-vim package.json
-
-# Start polling
-yarn test
-
-# Send test message (in another terminal)
-yarn test:send
-
-# Invokes sqs.js handler, outputs result in the first terminal
+./test.sh
 ```
-
-![](example/screenshot.png)
-
-## TODO:
-
-- SAM support
-- Multiple queues/functions support
-- Option to auto-remove successfully processed messages
