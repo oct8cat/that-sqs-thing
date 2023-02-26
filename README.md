@@ -6,7 +6,7 @@ Poll SQS queue and invoke local serverless function
 ## Install
 
 ```
-yarn i -g that-sqs-thing
+npm i -g that-sqs-thing
 ```
 
 ## Usage
